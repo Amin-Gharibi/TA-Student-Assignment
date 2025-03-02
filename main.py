@@ -1,6 +1,4 @@
 from typing import List
-from parsers import parse_student_file, parse_ta_file, parse_previous_assignments
-from assignment_algo import balanced_assignment
 
 # CONSTANTS
 PRESENTATION_TIME: int = 30  # in minutes
@@ -11,9 +9,11 @@ FONT_FILEPATH: str = './Vazirmatn-Regular.ttf'
 
 
 def main() -> None:
+    from parsers import parse_student_file, parse_ta_file, parse_previous_assignments
     # Parse input files
     students = parse_student_file(STUDENTS_FILEPATH)
     tas, availability, ta_start_times = parse_ta_file(TA_FILEPATH)
+    from assignment_algo import balanced_assignment
     previous_assignments = parse_previous_assignments(PREVIOUS_ASSIGNMENT_FILES)
 
     if not students:
