@@ -1,2 +1,1 @@
-SAMPLE DATA:
-Amin Gharibi, 09:30, 12:30
+Amin Gharibi, 2025-03-05, 09:30, 12:30

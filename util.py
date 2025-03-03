@@ -2,6 +2,7 @@ from typing import List, Dict
 import pandas as pd
 import openpyxl
 from main import FONT_FILEPATH
+import os
 
 
 def create_excel_output(
@@ -10,6 +11,7 @@ def create_excel_output(
 ) -> None:
     """
     Creates an Excel file with assignment information using Vazirmatn font.
+    Results are sorted by date and time.
 
     Args:
         assignment_data: List of dictionaries with assignment details
@@ -19,8 +21,22 @@ def create_excel_output(
         # Create a Pandas Excel writer
         writer = pd.ExcelWriter('assignment_results.xlsx', engine='openpyxl')
 
-        # Create the full assignments sheet
+        # Convert list of dictionaries to DataFrame
         assignments_df = pd.DataFrame(assignment_data)
+
+        # Sort the DataFrame by Date and then by Start Time
+        # First, ensure Date is in a sortable format
+        assignments_df['SortDate'] = pd.to_datetime(assignments_df['Date'])
+        # Parse the start time and combine with date for proper sorting
+        assignments_df['SortDateTime'] = pd.to_datetime(
+            assignments_df['Date'] + ' ' + assignments_df['Start Time']
+        )
+        # Sort the DataFrame
+        assignments_df = assignments_df.sort_values(['SortDate', 'SortDateTime'])
+        # Drop the sorting columns
+        assignments_df = assignments_df.drop(['SortDate', 'SortDateTime'], axis=1)
+
+        # Create the full assignments sheet with sorted data
         assignments_df.to_excel(writer, sheet_name='Full Assignments', index=False)
 
         # Create a private sheet (just student-TA pairings)
@@ -39,7 +55,6 @@ def create_excel_output(
         summary_df = pd.DataFrame(summary_data)
         summary_df.to_excel(writer, sheet_name='Summary', index=False)
 
-        import os
         # Check if the Vazirmatn font file exists
         vazir_font_exists = os.path.exists(FONT_FILEPATH)
 
@@ -169,12 +184,17 @@ def create_excel_output(
         print(f"Error creating Excel file: {e}")
         # Fallback to text file
         with open("public-result.txt", "w") as public_file:
-            for item in assignment_data:
-                public_file.write(f"{item['Student']}, {item['TA']}, {item['Start Time']}, {item['End Time']}\n")
+            # Sort the data before writing to file
+            sorted_data = sorted(assignment_data, key=lambda x: (x['Date'], x['Start Time']))
+            for item in sorted_data:
+                # Modified to include Date and Start Time (no End Time)
+                public_file.write(f"{item['Student']}, {item['TA']}, {item['Date']}, {item['Start Time']}\n")
         print("Fallback: Text file created instead.")
 
     finally:
+        # Also sort the data for the private-result.txt file
+        sorted_data = sorted(assignment_data, key=lambda x: (x['Date'], x['Start Time']))
         with open("private-result.txt", "w") as private_file:
-            for item in assignment_data:
+            for item in sorted_data:
                 private_file.write(f"{item['Student']}, {item['TA']}\n")
             print("TXT file 'private-result.txt' created successfully for future usage")
